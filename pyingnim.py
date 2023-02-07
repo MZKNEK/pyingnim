@@ -5,17 +5,21 @@ import argparse
 import textwrap
 from PIL import Image, ImageFilter, ImageDraw, ImageFont
 
-VERSION             = "1.0"
+VERSION             = "1.1"
 
-LEFT_MARGIN         = 40
-TAG_FONT_SIZE       = 18
+TITLE_FONT_SIZE     = 62
+DESC_FONT_SIZE      = 23
+LEFT_MARGIN         = 50
+TAG_FONT_SIZE       = 20
 TAG_IN_MARGIN       = 20
+RATE_FONT_SIZE      = 72
 SMALL_IMAGE_OFFSET  = 72
 DIAGONAL_JUMP       = 15
 
 FONT_BOLD           = "resources/Lato-Bold.ttf"
 FONT_REGULAR        = "resources/Lato-Regular.ttf"
 TEMPLATE            = "resources/tmp.png"
+STAR                = "resources/star.png"
 
 def get_path(path) -> str:
     return os.path.join(os.path.dirname(__file__), path)
@@ -79,19 +83,29 @@ def put_tags(image, tags) -> None:
         image.paste(t, (start, 550), t)
         start = start + l + 10 + (TAG_IN_MARGIN * 2)
 
+def get_max_len(font, size) -> int:
+    for i in range(40):
+        l = int(font.getlength(('g' * i)))
+        if l > size:
+            return i
+    return -1
+
 def put_title(image, text) -> None:
-    lato = ImageFont.FreeTypeFont(get_path(FONT_BOLD), 52)
-    lines = textwrap.wrap(text, width = 26)
+    lato = ImageFont.FreeTypeFont(get_path(FONT_BOLD), TITLE_FONT_SIZE)
+    lines = textwrap.wrap(text, width = get_max_len(lato, 800))
     # image.text((LEFT_MARGIN, 70), text, fill = (255, 255, 255), font = lato)
     image.text((LEFT_MARGIN, 70), '\n'.join(lines), fill = (255, 255, 255), font = lato)
 
 def put_desc(image, text) -> None:
-    lato = ImageFont.FreeTypeFont(get_path(FONT_REGULAR), 18)
+    lato = ImageFont.FreeTypeFont(get_path(FONT_REGULAR), DESC_FONT_SIZE)
     image.text((LEFT_MARGIN, 45), text, fill = (160, 160, 160), font = lato)
 
-def put_mark(image, text) -> None:
-    mark = ImageFont.FreeTypeFont(get_path(FONT_BOLD), 72)
-    image.text((LEFT_MARGIN, 450), text, fill = (255, 0, 0), font = mark)
+def put_mark(image, canvas, text) -> None:
+    star = Image.open(get_path(STAR)).resize((RATE_FONT_SIZE, RATE_FONT_SIZE))
+    image.paste(star, (LEFT_MARGIN, 458), star)
+
+    mark = ImageFont.FreeTypeFont(get_path(FONT_BOLD), RATE_FONT_SIZE)
+    canvas.text((LEFT_MARGIN + 10 + star.size[0], 450), text, fill = (255, 255, 255), font = mark)
 
 def get_cli_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(add_help=False)
@@ -124,7 +138,7 @@ def main() -> None:
         if args.d:
             put_desc(canvas, args.d)
         if args.r:
-            put_mark(canvas, args.r)
+            put_mark(bg, canvas, args.r)
 
         bg.save(args.o)
         sys.exit(0)
