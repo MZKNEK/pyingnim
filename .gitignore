@@ -1,0 +1,7 @@
+*.sln
+.vs
+.vscode
+.settings
+bin
+obj
+TestResults
