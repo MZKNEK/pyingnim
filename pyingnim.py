@@ -5,7 +5,7 @@ import argparse
 import textwrap
 from PIL import Image, ImageFilter, ImageDraw, ImageFont
 
-VERSION             = "1.1"
+VERSION             = "1.2"
 
 TITLE_FONT_SIZE     = 62
 DESC_FONT_SIZE      = 23
@@ -26,7 +26,6 @@ def get_path(path) -> str:
 
 def get_bg(url) -> Image.Image:
     cover = Image.open(requests.get(url, stream=True).raw).convert("RGBA")
-    # tmp = Image.new("RGBA", (1200, 630), (30, 30, 30, 245))
     tmp = Image.open(get_path(TEMPLATE))
 
     tw, th = tmp.size
@@ -71,10 +70,23 @@ def add_corners(im, rad) -> Image.Image:
     im.putalpha(alpha)
     return im
 
+def get_real_tags(font, tags, maxSize):
+    newTags = []
+    totalLen = 0
+    for tag in tags:
+        tLen = font.getlength(tag)
+        tLen += 10 + (TAG_IN_MARGIN * 2)
+        if totalLen + tLen <= maxSize:
+            newTags.append(tag)
+            totalLen += tLen
+        else:
+            break
+    return newTags
+
 def put_tags(image, tags) -> None:
     start = LEFT_MARGIN
     lato = ImageFont.FreeTypeFont(get_path(FONT_REGULAR), TAG_FONT_SIZE)
-    for tag in tags:
+    for tag in get_real_tags(lato, tags, 700):
         l = int(lato.getlength(tag))
         t = Image.new("RGBA", (l + (TAG_IN_MARGIN * 2), TAG_FONT_SIZE + TAG_IN_MARGIN), (40, 40, 40, 240))
         c = ImageDraw.Draw(t);
@@ -90,19 +102,18 @@ def get_max_len(font, size) -> int:
             return i
     return -1
 
-def put_title(image, text) -> None:
+def put_title(canvas, text) -> None:
     fontSize = TITLE_FONT_SIZE
     if len(text) > 90:
         fontSize = fontSize - (10 * int(len(text) / 70))
 
     lato = ImageFont.FreeTypeFont(get_path(FONT_BOLD), fontSize)
-    lines = textwrap.wrap(text, width = get_max_len(lato, 790))
-    # image.text((LEFT_MARGIN, 70), text, fill = (255, 255, 255), font = lato)
-    image.text((LEFT_MARGIN, 70), '\n'.join(lines), fill = (255, 255, 255), font = lato)
+    lines = textwrap.wrap(text, width = get_max_len(lato, 760))
+    canvas.text((LEFT_MARGIN, 75), '\n'.join(lines), fill = (255, 255, 255), font = lato)
 
-def put_desc(image, text) -> None:
+def put_desc(canvas, text) -> None:
     lato = ImageFont.FreeTypeFont(get_path(FONT_REGULAR), DESC_FONT_SIZE)
-    image.text((LEFT_MARGIN, 45), text, fill = (160, 160, 160), font = lato)
+    canvas.text((LEFT_MARGIN, 37), text, fill = (160, 160, 160), font = lato)
 
 def put_mark(image, canvas, text) -> None:
     star = Image.open(get_path(STAR)).resize((RATE_FONT_SIZE, RATE_FONT_SIZE))
@@ -122,6 +133,7 @@ def get_cli_parser() -> argparse.ArgumentParser:
     parser.add_argument("-o", help="Output path", default=None)
     parser.add_argument("-u", help="Url to image", default=None)
     parser.add_argument("--tags", help="Tags divided by space", default=[], nargs='+')
+    parser.add_argument("--dry_run", help="Run script without saving output file", action='store_true', default=False)
     return parser
 
 def main() -> None:
@@ -129,12 +141,10 @@ def main() -> None:
     args = parser.parse_args()
     print("pyIngnim v" + VERSION)
 
-    if args.u and args.o:
+    if args.u and (args.o or args.dry_run):
         bg = get_bg(args.u)
-
         if args.tags:
             put_tags(bg, args.tags)
-
         canvas = ImageDraw.Draw(bg);
         if args.t:
             put_title(canvas, args.t)
@@ -142,8 +152,11 @@ def main() -> None:
             put_desc(canvas, args.d)
         if args.r:
             put_mark(bg, canvas, args.r)
-
-        bg.save(args.o)
+        if args.dry_run:
+            bg.show()
+            sys.exit(0)
+        if args.o:
+            bg.save(args.o)
         sys.exit(0)
 
     parser.print_usage()
