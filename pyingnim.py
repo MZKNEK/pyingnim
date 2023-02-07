@@ -5,15 +5,17 @@ import argparse
 import textwrap
 from PIL import Image, ImageFilter, ImageDraw, ImageFont
 
-VERSION             = "1.2"
+VERSION = "1.3"
 
+# FOR TEMPLATE 1200x630
+MIN_COVER_WIDTH     = 446
 TITLE_FONT_SIZE     = 62
 DESC_FONT_SIZE      = 23
 LEFT_MARGIN         = 50
 TAG_FONT_SIZE       = 20
 TAG_IN_MARGIN       = 20
+TAG_SPACING         = 10
 RATE_FONT_SIZE      = 72
-SMALL_IMAGE_OFFSET  = 72
 DIAGONAL_JUMP       = 15
 
 FONT_BOLD           = "resources/Lato-Bold.ttf"
@@ -39,15 +41,20 @@ def get_bg(url) -> Image.Image:
     sh = th
     sw = int(sr * cw)
 
+    if sw < MIN_COVER_WIDTH:
+        sw = MIN_COVER_WIDTH
+        sr = sw / cw
+        sh = int(sr * ch)
+
     bc = cover.resize((bw, bh)).filter(ImageFilter.BoxBlur(3))
     sc = cover.resize((sw, sh))
 
-    rw = SMALL_IMAGE_OFFSET
+    rw = sw - 386
     for y in range(sh):
         for x in range(rw):
             sc.putpixel((x, y), (0, 0, 0, 0))
         if (y % DIAGONAL_JUMP == 0):
-            rw = rw - 1
+            rw -= 1
 
     csw = int(bw * 0.1)
     csh = int(bh * 0.1)
@@ -70,12 +77,12 @@ def add_corners(im, rad) -> Image.Image:
     im.putalpha(alpha)
     return im
 
-def get_real_tags(font, tags, maxSize):
+def get_real_tags(font, tags, maxSize) -> list[str]:
     newTags = []
     totalLen = 0
     for tag in tags:
         tLen = font.getlength(tag)
-        tLen += 10 + (TAG_IN_MARGIN * 2)
+        tLen += TAG_SPACING + (TAG_IN_MARGIN * 2)
         if totalLen + tLen <= maxSize:
             newTags.append(tag)
             totalLen += tLen
@@ -93,7 +100,7 @@ def put_tags(image, tags) -> None:
         c.text((TAG_IN_MARGIN, TAG_IN_MARGIN / 3), tag, fill = (235, 235, 235), font = lato)
         t = add_corners(t, 15)
         image.paste(t, (start, 550), t)
-        start = start + l + 10 + (TAG_IN_MARGIN * 2)
+        start += l + TAG_SPACING + (TAG_IN_MARGIN * 2)
 
 def get_max_len(font, size) -> int:
     for i in range(40):
@@ -104,8 +111,9 @@ def get_max_len(font, size) -> int:
 
 def put_title(canvas, text) -> None:
     fontSize = TITLE_FONT_SIZE
-    if len(text) > 90:
-        fontSize = fontSize - (10 * int(len(text) / 70))
+    textSize = len(text)
+    if  textSize > 90:
+        fontSize = fontSize - (10 * int(textSize / 70))
 
     lato = ImageFont.FreeTypeFont(get_path(FONT_BOLD), fontSize)
     lines = textwrap.wrap(text, width = get_max_len(lato, 760))
