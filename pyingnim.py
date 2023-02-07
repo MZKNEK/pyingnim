@@ -91,8 +91,12 @@ def get_max_len(font, size) -> int:
     return -1
 
 def put_title(image, text) -> None:
-    lato = ImageFont.FreeTypeFont(get_path(FONT_BOLD), TITLE_FONT_SIZE)
-    lines = textwrap.wrap(text, width = get_max_len(lato, 800))
+    fontSize = TITLE_FONT_SIZE
+    if len(text) > 90:
+        fontSize = fontSize - (10 * int(len(text) / 70))
+
+    lato = ImageFont.FreeTypeFont(get_path(FONT_BOLD), fontSize)
+    lines = textwrap.wrap(text, width = get_max_len(lato, 790))
     # image.text((LEFT_MARGIN, 70), text, fill = (255, 255, 255), font = lato)
     image.text((LEFT_MARGIN, 70), '\n'.join(lines), fill = (255, 255, 255), font = lato)
 
@@ -109,7 +113,6 @@ def put_mark(image, canvas, text) -> None:
 
 def get_cli_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(add_help=False)
-    parser.usage = "pyingnim.py -u \"http://cdn.shinden.eu/cdn1/images/genuine/235677.jpg\" -o ../torr/img.png -t Gintama -d \"Lato 2020 / TV\" -r \"7.23\" --tags Horror Loli Dupa"
     parser.description = "Image generating script"
     parser.add_argument("-h", "--help", help="Show help", action="help")
     parser.add_argument("-v", "--version", help="Show version", action="version", version=VERSION)
