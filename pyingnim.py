@@ -49,7 +49,7 @@ def get_bg(url) -> Image.Image:
     bc = cover.resize((bw, bh)).filter(ImageFilter.BoxBlur(3))
     sc = cover.resize((sw, sh))
 
-    rw = sw - 386
+    rw = sw - 388
     for y in range(sh):
         for x in range(rw):
             sc.putpixel((x, y), (0, 0, 0, 0))
