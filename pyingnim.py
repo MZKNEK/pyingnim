@@ -49,7 +49,7 @@ def get_bg(url) -> Image.Image:
     bc = cover.resize((bw, bh)).filter(ImageFilter.BoxBlur(3))
     sc = cover.resize((sw, sh))
 
-    rw = sw - 388
+    rw = sw - 386
     for y in range(sh):
         for x in range(rw):
             sc.putpixel((x, y), (0, 0, 0, 0))
@@ -61,8 +61,7 @@ def get_bg(url) -> Image.Image:
     bg = bc.crop((csw, csh, csw + tw, csh + th))
 
     bg.paste(sc, (tw - sw, 0), sc)
-    bg.paste(tmp, (0, 0), tmp)
-    return bg
+    return Image.alpha_composite(bg, tmp)
 
 def add_corners(im, rad) -> Image.Image:
     circle = Image.new('L', (rad * 2, rad * 2), 0)
