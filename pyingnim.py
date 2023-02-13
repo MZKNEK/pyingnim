@@ -5,23 +5,23 @@ import argparse
 import textwrap
 from PIL import Image, ImageFilter, ImageDraw, ImageFont
 
-VERSION = "1.4"
+VERSION = "1.5"
 
 # FOR TEMPLATE 1200x630
 MIN_COVER_WIDTH = 446
 TITLE_FONT_SIZE = 62
-DESC_FONT_SIZE  = 23
-LEFT_MARGIN     = 50
-TAG_FONT_SIZE   = 20
-TAG_IN_MARGIN   = 20
-TAG_SPACING     = 10
-RATE_FONT_SIZE  = 72
-DIAGONAL_JUMP   = 15
+DESC_FONT_SIZE = 28
+LEFT_MARGIN = 50
+TAG_FONT_SIZE = 26
+TAG_IN_MARGIN = 20
+TAG_SPACING = 10
+RATE_FONT_SIZE = 72
+DIAGONAL_JUMP = 15
 
-FONT_BOLD       = "resources/Lato-Bold.ttf"
-FONT_REGULAR    = "resources/Lato-Regular.ttf"
-TEMPLATE        = "resources/tmp.png"
-STAR            = "resources/star.png"
+FONT_BOLD = "resources/Lato-Bold.ttf"
+FONT_REGULAR = "resources/Lato-Regular.ttf"
+TEMPLATE = "resources/tmp.png"
+STAR = "resources/star.png"
 
 
 def get_path(path) -> str:
@@ -109,18 +109,18 @@ def put_tags(image, tags) -> None:
         tImg = Image.new("RGBA", (ln + (TAG_IN_MARGIN * 2),
                          TAG_FONT_SIZE + TAG_IN_MARGIN), (40, 40, 40, 240))
         canvas = ImageDraw.Draw(tImg)
-        canvas.text((TAG_IN_MARGIN, TAG_IN_MARGIN / 3),
+        canvas.text((TAG_IN_MARGIN, TAG_IN_MARGIN / 3.5),
                     tag, fill=(235, 235, 235), font=font)
         tImg = add_corners(tImg, 15)
         image.paste(tImg, (start, 550), tImg)
         start += ln + TAG_SPACING + (TAG_IN_MARGIN * 2)
 
 
-def get_max_len(font, size, max=40) -> int:
+def get_max_len(text, font, size, max=100) -> int:
     for i in range(max):
-        l = int(font.getlength(('g' * i)))
-        if l > size:
-            return i
+        ln = int(font.getlength(text[:len(text)-i]))
+        if ln <= size:
+            return len(text) - i
     return max
 
 
@@ -131,14 +131,22 @@ def put_title(canvas, text) -> None:
         fontSize = fontSize - (10 * int(textSize / 70))
 
     font = ImageFont.FreeTypeFont(get_path(FONT_BOLD), fontSize)
-    lines = textwrap.wrap(text, width=get_max_len(font, 760))
-    canvas.text((LEFT_MARGIN, 75), '\n'.join(
+    lines = textwrap.wrap(text, width=get_max_len(text, font, 670))
+    canvas.text((LEFT_MARGIN, 72), '\n'.join(
         lines), fill=(255, 255, 255), font=font)
+
+
+def trim_text_to_len(text, ln) -> str:
+    if ln >= len(text):
+        return text
+    return f"{text[:ln-3]}..."
 
 
 def put_desc(canvas, text) -> None:
     font = ImageFont.FreeTypeFont(get_path(FONT_REGULAR), DESC_FONT_SIZE)
-    canvas.text((LEFT_MARGIN, 37), text, fill=(160, 160, 160), font=font)
+    max_len = get_max_len(text, font, 760)
+    canvas.text((LEFT_MARGIN, 30), trim_text_to_len(
+        text, max_len), fill=(160, 160, 160), font=font)
 
 
 def put_mark(image, canvas, text) -> None:
