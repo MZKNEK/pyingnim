@@ -24,11 +24,11 @@ TEMPLATE = "resources/tmp.png"
 STAR = "resources/star.png"
 
 
-def get_path(path) -> str:
+def get_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), path)
 
 
-def get_cover(url, path) -> Image.Image:
+def get_cover(url: str, path: str) -> Image.Image:
     if url:
         return Image.open(requests.get(url, stream=True).raw).convert("RGBA")
     if path:
@@ -36,7 +36,7 @@ def get_cover(url, path) -> Image.Image:
     return None
 
 
-def get_bg(cover) -> Image.Image:
+def get_bg(cover: Image.Image) -> Image.Image:
     tmp = Image.open(get_path(TEMPLATE))
 
     tw, th = tmp.size
@@ -73,7 +73,7 @@ def get_bg(cover) -> Image.Image:
     return Image.alpha_composite(bg, tmp)
 
 
-def add_corners(im, rad) -> Image.Image:
+def add_corners(im: Image.Image, rad: int) -> Image.Image:
     circle = Image.new('L', (rad * 2, rad * 2), 0)
     draw = ImageDraw.Draw(circle)
     draw.ellipse((0, 0, rad * 2 - 1, rad * 2 - 1), fill=255)
@@ -87,7 +87,7 @@ def add_corners(im, rad) -> Image.Image:
     return im
 
 
-def get_real_tags(font, tags, maxSize) -> list[str]:
+def get_real_tags(font: ImageFont.ImageFont, tags: list[str], maxSize: int) -> list[str]:
     newTags = []
     totalLen = 0
     for tag in tags:
@@ -101,7 +101,7 @@ def get_real_tags(font, tags, maxSize) -> list[str]:
     return newTags
 
 
-def put_tags(image, tags) -> None:
+def put_tags(image: Image.Image, tags: list[str]) -> None:
     start = LEFT_MARGIN
     font = ImageFont.FreeTypeFont(get_path(FONT_REGULAR), TAG_FONT_SIZE)
     for tag in get_real_tags(font, tags, 700):
@@ -116,7 +116,7 @@ def put_tags(image, tags) -> None:
         start += ln + TAG_SPACING + (TAG_IN_MARGIN * 2)
 
 
-def get_max_len(text, font, size, max=100) -> int:
+def get_max_len(text: str, font: ImageFont.ImageFont, size: int, max: int = 100) -> int:
     for i in range(max):
         ln = int(font.getlength(text[:len(text)-i]))
         if ln <= size:
@@ -124,7 +124,7 @@ def get_max_len(text, font, size, max=100) -> int:
     return max
 
 
-def put_title(canvas, text) -> None:
+def put_title(canvas: ImageDraw.ImageDraw, text: str) -> None:
     fontSize = TITLE_FONT_SIZE
     textSize = len(text)
     if textSize > 90:
@@ -136,20 +136,20 @@ def put_title(canvas, text) -> None:
         lines), fill=(255, 255, 255), font=font)
 
 
-def trim_text_to_len(text, ln) -> str:
+def trim_text_to_len(text: str, ln: int) -> str:
     if ln >= len(text):
         return text
     return f"{text[:ln-3]}..."
 
 
-def put_desc(canvas, text) -> None:
+def put_desc(canvas: ImageDraw.ImageDraw, text: str) -> None:
     font = ImageFont.FreeTypeFont(get_path(FONT_REGULAR), DESC_FONT_SIZE)
     max_len = get_max_len(text, font, 760)
     canvas.text((LEFT_MARGIN, 30), trim_text_to_len(
         text, max_len), fill=(160, 160, 160), font=font)
 
 
-def put_mark(image, canvas, text) -> None:
+def put_mark(image: Image.Image, canvas: ImageDraw.ImageDraw, text: str) -> None:
     star = Image.open(get_path(STAR)).resize((RATE_FONT_SIZE, RATE_FONT_SIZE))
     image.paste(star, (LEFT_MARGIN, 458), star)
 
